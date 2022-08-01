@@ -3,6 +3,7 @@ import os
 import sys
 import time
 import re
+import random
 
 import numpy as np
 import torch
@@ -40,8 +41,13 @@ def train(args):
         transforms.ToTensor(),
         transforms.Lambda(lambda x: x.mul(255))
     ])
+    
+
     train_dataset = datasets.ImageFolder(args.dataset, transform)
-    train_loader = DataLoader(train_dataset, batch_size=args.batch_size)
+    indices_subset = random.sample(range(0, len(train_dataset)), 50) 
+    train_subset = torch.utils.data.Subset(train_dataset , indices_subset)
+    train_loader = DataLoader(train_subset, batch_size=args.batch_size)
+    
 
     transformer = TransformerNet().to(device)
     optimizer = Adam(transformer.parameters(), args.lr)
@@ -112,7 +118,7 @@ def train(args):
     # save model
     transformer.eval().cpu()
     save_model_filename = "epoch_" + str(args.epochs) + "_" + str(time.ctime()).replace(' ', '_') + "_" + str(
-        args.content_weight) + "_" + str(args.style_weight) + ".model"
+        args.content_weight) + "_" + str(args.style_weight) + ".pth"
     save_model_path = os.path.join(args.save_model_dir, save_model_filename)
     torch.save(transformer.state_dict(), save_model_path)
 
