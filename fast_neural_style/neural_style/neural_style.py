@@ -38,12 +38,15 @@ def train(args):
     transform = transforms.Compose([
         transforms.Resize(args.image_size),
         transforms.CenterCrop(args.image_size),
+        # Include random rotation with arguments of minimum and maximum angle
+        transforms.RandomRotation((args.degrees_min,args.degrees_max)), 
         transforms.ToTensor(),
         transforms.Lambda(lambda x: x.mul(255))
     ])
     
 
     train_dataset = datasets.ImageFolder(args.dataset, transform)
+    # Create a subset of 50 images to speed up training
     indices_subset = random.sample(range(0, len(train_dataset)), 50) 
     train_subset = torch.utils.data.Subset(train_dataset , indices_subset)
     train_loader = DataLoader(train_subset, batch_size=args.batch_size)
@@ -220,6 +223,11 @@ def main():
                                   help="number of images after which the training loss is logged, default is 500")
     train_arg_parser.add_argument("--checkpoint-interval", type=int, default=2000,
                                   help="number of batches after which a checkpoint of the trained model will be created")
+
+    train_arg_parser.add_argument("--degrees_min", type=int, default=0,
+                                  help="angle of the minimum rotation for the random rotation as data augmentation")
+    train_arg_parser.add_argument("--degrees_max", type=int, default=180,
+                                  help="angle of the maximum rotation for the random rotation as data augmentation")
 
     eval_arg_parser = subparsers.add_parser("eval", help="parser for evaluation/stylizing arguments")
     eval_arg_parser.add_argument("--content-image", type=str, required=True,
